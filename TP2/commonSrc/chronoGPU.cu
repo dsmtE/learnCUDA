@@ -1,7 +1,3 @@
-/*
-* File: chronoGPU.cu
-* Author: Maxime MARIA
-*/
 
 #include "chronoGPU.hpp"
 #include "common.hpp"

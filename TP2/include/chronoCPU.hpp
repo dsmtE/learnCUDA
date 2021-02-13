@@ -1,10 +1,4 @@
-/*
-* File: chronoCPU.hpp
-* Author: Maxime MARIA
-*/
-
-#ifndef __CHRONO_CPU_HPP
-#define __CHRONO_CPU_HPP
+#pragma once
 
 #ifdef _WIN32
 #include <windows.h>
@@ -12,28 +6,25 @@
 #include <sys/time.h>
 #endif
 
-class ChronoCPU 
-{
-private:
-#ifdef _WIN32
-	LARGE_INTEGER m_frequency;
-	LARGE_INTEGER m_start;
-	LARGE_INTEGER m_stop;
-#else
-	timeval m_start;
-	timeval m_stop;
-#endif
+class ChronoCPU {
+	private:
+	#ifdef _WIN32
+		LARGE_INTEGER m_frequency;
+		LARGE_INTEGER m_start;
+		LARGE_INTEGER m_stop;
+	#else
+		timeval m_start;
+		timeval m_stop;
+	#endif
 
-	bool m_started;
+		bool m_started;
 
-public:
-	ChronoCPU();
-	~ChronoCPU();
+	public:
+		ChronoCPU();
+		~ChronoCPU();
 
-	void	start();
-	void	stop();
-	float	elapsedTime();
+		void	start();
+		void	stop();
+		float	elapsedTime();
 };
-
-#endif
 

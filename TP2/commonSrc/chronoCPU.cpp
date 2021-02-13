@@ -1,8 +1,3 @@
-/*
-* File: chronoCPU.cpp
-* Author: Maxime MARIA
-*/
-
 #include "chronoCPU.hpp"
 
 #include <iostream>

@@ -1,10 +1,4 @@
-/*
-* File: chronoGPU.hpp
-* Author: Maxime MARIA
-*/
-
-#ifndef __CHRONO_GPU_HPP
-#define __CHRONO_GPU_HPP
+#pragma once
 
 class ChronoGPU {
 private:
@@ -21,6 +15,3 @@ public:
 	void	reset();
 	float	elapsedTime();
 };
-
-#endif
-

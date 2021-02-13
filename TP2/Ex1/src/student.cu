@@ -1,56 +1,7 @@
-/*
-* TP 2 - Convolution d'images
-* --------------------------
-* Mémoire constante et textures
-*
-* File: student.cu
-* Author: Maxime MARIA
-*/
-
 #include "student.hpp"
 #include "chronoGPU.hpp"
 
 namespace IMAC {
-
-// ================================================== For image comparison
-	std::ostream &operator <<(std::ostream &os, const uchar4 &c) {
-		os << "[" << uint(c.x) << "," << uint(c.y) << "," << uint(c.z) << "," << uint(c.w) << "]";  
-    	return os; 
-	}
-
-	void compareImages(const std::vector<uchar4> &a, const std::vector<uchar4> &b)
-	{
-		bool error = false;
-		if (a.size() != b.size())
-		{
-			std::cout << "Size is different !" << std::endl;
-			error = true;
-		}
-		else
-		{
-			for (uint i = 0; i < a.size(); ++i)
-			{
-				// Floating precision can cause small difference between host and device
-				if (	std::abs(a[i].x - b[i].x) > 2 || std::abs(a[i].y - b[i].y) > 2 
-					|| std::abs(a[i].z - b[i].z) > 2 || std::abs(a[i].w - b[i].w) > 2)
-				{
-					std::cout << "Error at index " << i << ": a = " << a[i] << " - b = " << b[i] << " - " << std::abs(a[i].x - b[i].x) << std::endl;
-					error = true;
-					break;
-				}
-			}
-		}
-		if (error)
-		{
-			std::cout << " -> You failed, retry!" << std::endl;
-		}
-		else
-		{
-			std::cout << " -> Well done!" << std::endl;
-		}
-	}
-// ==================================================
-
 
 	__global__ void naiveConv(const uchar4* input, const uint imgWidth, const uint imgHeight, const float* matConv, const int matSize, uchar4* output) {
 		const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,19 +20,6 @@ namespace IMAC {
 					// Handle borders
 					dX = min(max(dX, 0), imgWidth-1);
 					dY = min(max(dY, 0), imgHeight-1);
-					/*
-					if (dX < 0) 
-						dX = 0;
-
-					if ( dX >= imgWidth ) 
-						dX = imgWidth - 1;
-
-					if ( dY < 0 ) 
-						dY = 0;
-
-					if ( dY >= imgHeight ) 
-						dY = imgHeight - 1;
-						*/
 
 					const int idMat	= j * matSize + i;
 					const int idPixel = dY * imgWidth + dX;
@@ -120,14 +58,14 @@ namespace IMAC {
 		cudaMalloc((void**)&matConv_cu, matConv.size() * sizeof(float));
 		cudaMalloc((void**)&output_cu, inputImg.size() * sizeof(uchar4));
 		chrGPU.stop();
-		std::cout 	<< " Done : " << chrGPU.elapsedTime() << " ms" << std::endl;
+		std::cout 	<< " -> Done : " << chrGPU.elapsedTime() << " ms" << std::endl;
 
 		// copy data to GPU
 		cudaMemcpy(input_cu, inputImg.data(), inputImg.size() * sizeof(uchar4), cudaMemcpyHostToDevice);
 		cudaMemcpy(matConv_cu, matConv.data(), matConv.size() * sizeof(float), cudaMemcpyHostToDevice);
 
 		// GPU compute
-		std::cout << "Process on GPU " << std::endl;
+		std::cout << "Process:" << std::endl;
 		chrGPU.start();
 		const dim3 dimThreads(32, 32);
 		const dim3 dimBlock(imgWidth/dimThreads.x+1, imgHeight/dimThreads.y+1);

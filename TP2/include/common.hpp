@@ -1,34 +1,39 @@
-#ifndef __COMMON_HPP
-#define __COMMON_HPP
+#pragma once
 
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
+#include <cassert>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <math_functions.h>
+
 
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-static void HandleError(cudaError_t err, const char *file, const int line)
-{
-    if (err != cudaSuccess)
-    {
-    	std::stringstream ss;
-    	ss << line;
-        std::string errMsg(cudaGetErrorString(err));
-        errMsg += " (file: " + std::string(file);
-        errMsg += " at line: " + ss.str() + ")";
-        std::cout << errMsg << std::endl;
-        throw std::runtime_error(errMsg);
-    }
-}
+void HandleError(cudaError_t err, const char *file, const int line);
 
 #define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
-#endif
 
+template<typename T>
+inline const T& clamp( const T& val, const T& min, const T& max ) {
+    assert( !(max < min) );
+    return (val < min) ? min : (max < val) ? max : val;
+}
 
+inline std::ostream &operator <<(std::ostream &os, const uchar4 &c) {
+    os << "[" << uint(c.x) << "," << uint(c.y) << "," << uint(c.z) << "," << uint(c.w) << "]";  
+    return os; 
+}
+namespace IMAC {
 
+    void printUsageAndExit(const char *prg);
+
+    void convCPU(const std::vector<uchar4> &input, const uint imgWidth, const uint imgHeight, 
+                const std::vector<float> &matConv, const uint matSize, std::vector<uchar4> &output);
+
+    void compareImages(const std::vector<uchar4> &a, const std::vector<uchar4> &b);
+}

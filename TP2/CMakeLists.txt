@@ -1,9 +1,8 @@
-get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-string(REPLACE " " "_" dirName ${dirName})
+get_filename_component(tpName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+string(REPLACE " " "_" tpName ${tpName})
 
-set(targetName "${tpName}_${dirName}")
+SUBDIRLIST(subDirs ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB_RECURSE sources "src/*")
-
-add_executable(${targetName} ${sources})
-target_include_directories(${targetName} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+FOREACH(subdir ${subDirs})
+  ADD_SUBDIRECTORY(${subdir})
+ENDFOREACH()
