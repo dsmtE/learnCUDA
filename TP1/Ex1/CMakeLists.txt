@@ -7,5 +7,4 @@ file(GLOB_RECURSE sources "src/*.cpp")
 file(GLOB_RECURSE headers "src/*.hpp")
 file(GLOB_RECURSE cuda "src/*.cu")
 
-message("target : ${targetName}")
 add_executable(${targetName} ${cuda} ${sources} ${headers})
