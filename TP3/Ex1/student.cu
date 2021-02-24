@@ -9,8 +9,8 @@
 namespace IMAC {
 
 	void configureKernelSize(const size_t arraySize, int& threadsByBlock, int& blockNumber) {
-		threadsByBlock = MAX_NB_THREADS;
-		blockNumber = DEFAULT_NB_BLOCKS;
+		threadsByBlock = umin(nextPow2<uint>(arraySize), MAX_NB_THREADS);
+		blockNumber = arraySize/threadsByBlock+1;
 	}
 
 	__global__
@@ -21,22 +21,21 @@ namespace IMAC {
 		unsigned int globalIdx = localIdx + blockIdx.x * blockDim.x;
 
 		// copy data in shared memory
-		shared[localIdx] = array[globalIdx];
-		// if(globalIdx < size) {
-		// 	shared[localIdx] = array[globalIdx];
-		// }else {
-		// 	shared[localIdx] = 0; // all other elements to 0
-		// }
+		if(globalIdx < size) {
+			shared[localIdx] = array[globalIdx];
+		}else {
+			shared[localIdx] = 0; // all other elements to 0
+		}
 		__syncthreads();
 
 		// reduction
 		for(unsigned int s = 1; s < blockDim.x; s *= 2) {
 
-			// if (localIdx % (2*s) == 0)
-			// 	shared[localIdx] = max(shared[localIdx], shared[localIdx + s]);
+			// if (localIdx % (2*s) == 0 && localIdx + s < blockDim.x)
+			// 	shared[localIdx] = umax(shared[localIdx], shared[localIdx + s]);
 
 			const unsigned int StridedIndex = 2 * s * localIdx;
-			if(StridedIndex < blockDim.x)
+			if(StridedIndex + s < blockDim.x)
 				shared[StridedIndex] = max(shared[StridedIndex], shared[StridedIndex + s]);
 
 			__syncthreads();
@@ -52,18 +51,17 @@ namespace IMAC {
 		uint *dev_array = nullptr;
 		uint *dev_partialMax = nullptr;
 
-		HANDLE_ERROR(cudaMalloc( (void**)&dev_array, array.size() * sizeof(uint)));
-		HANDLE_ERROR(cudaMemcpy( dev_array, array.data(), array.size() * sizeof(uint), cudaMemcpyHostToDevice));
+		HANDLE_ERROR(cudaMalloc((void**)&dev_array, array.size() * sizeof(uint)));
+		HANDLE_ERROR(cudaMemcpy(dev_array, array.data(), array.size() * sizeof(uint), cudaMemcpyHostToDevice));
 
 		// Configure kernel
-		int threadsByBlock = MAX_NB_THREADS;
-		int blockNumber = DEFAULT_NB_BLOCKS;
+		int threadsByBlock, blockNumber;
 		configureKernelSize(array.size(), threadsByBlock, blockNumber);
 
 		verifyDim(blockNumber, threadsByBlock);
 
 		// alloc host and dev partial array
-		std::vector<uint> host_partialMax(array.size()/blockNumber, 0);
+		std::vector<uint> host_partialMax(blockNumber, 0);
 		HANDLE_ERROR(cudaMalloc((void**) &dev_partialMax, host_partialMax.size() * sizeof(uint) ) );
 
 		const size_t bytesSharedMem = threadsByBlock * sizeof(uint);
@@ -76,14 +74,10 @@ namespace IMAC {
 		ChronoGPU chrGPU;
 		chrGPU.start();
 		for (size_t i = 0; i < nbIterations; ++i) { // Average timing on 'loop' iterations
-			std::cout << "iteration " << i << std::endl;
 			reduceKernel<<<blockNumber, threadsByBlock, bytesSharedMem>>>(dev_array, array.size(), dev_partialMax);
-			// std::cout << "Not implemented !" << std::endl;
 		}
 		chrGPU.stop();
 		timing.x = chrGPU.elapsedTime() / nbIterations;
-
-		std::cout << "Test" << std::endl;
 
 		// Retrieve partial result from device to host
 		HANDLE_ERROR(cudaMemcpy(host_partialMax.data(), dev_partialMax, host_partialMax.size() * sizeof(uint), cudaMemcpyDeviceToHost));

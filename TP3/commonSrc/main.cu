@@ -15,7 +15,7 @@ namespace IMAC {
 
     void printUsageAndExit(const char *prg) {
         std::cerr	<< "Usage: " << prg << std::endl
-                    << " \t -l <N>: launch <N> iterations (default N = 1)" << std::endl 
+                    << " \t -i <N>: launch <N> iterations (default N = 10)" << std::endl 
                     << " \t -n <N>: size of vector is <N> (default N = 2^23)" << std::endl 
                     << " \t -2n <N>: size of vector is 2^<N> (default N = 23, then size is 2^23)" << std::endl 
                     << std::endl;
@@ -41,7 +41,7 @@ namespace IMAC {
                     std::cerr << "No size provided..." << std::endl;
                     printUsageAndExit( argv[0] );
                 }
-            } else if ( !strcmp( argv[i], "-l" ) )  {
+            } else if ( !strcmp( argv[i], "-i" ) )  {
                 if ( sscanf( argv[++i], "%u", &nbIterations ) != 1 ) {
                     std::cerr << "No number of iterations provided..." << std::endl;
                     printUsageAndExit( argv[0] );
@@ -59,6 +59,7 @@ namespace IMAC {
 
         std::cout << "Initiliazing array..." << std::endl;
         std::srand(std::time(NULL));
+
         const uint maxRnd = 79797979;
         for (uint i = 0; i < size; ++i) {
             if(i % 32 == 0)
